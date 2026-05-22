@@ -608,7 +608,7 @@
    * the registration below actively unregisters any old worker and
    * clears its caches, so refreshes always show the latest edits.
    */
-  const ENABLE_OFFLINE = true;
+  const ENABLE_OFFLINE = false;
 
   function registerSW() {
     if (!("serviceWorker" in navigator)) return;
