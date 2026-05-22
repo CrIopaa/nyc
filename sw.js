@@ -8,7 +8,7 @@
  *     (so adding items to data.js auto-warms the cache on next visit).
  */
 
-const VERSION = "v3";
+const VERSION = "v4";
 const SHELL_CACHE = `ny-shell-${VERSION}`;
 const IMAGE_CACHE = `ny-images-${VERSION}`;
 const FONT_CACHE = `ny-fonts-${VERSION}`;
@@ -93,6 +93,44 @@ self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
 
+  // Navigation requests (PWA cold-start, full page reload). iOS standalone
+  // PWAs sometimes launch with extra query/hash, so ignoreSearch matches
+  // the cached index.html even when the launch URL differs slightly.
+  if (req.mode === "navigate" ||
+      (req.destination === "document") ||
+      (req.headers.get("Accept") || "").includes("text/html")) {
+    event.respondWith((async () => {
+      // Try network first so we get fresh content when online.
+      try {
+        const fresh = await fetch(req);
+        if (fresh && fresh.status === 200) {
+          const cache = await caches.open(SHELL_CACHE);
+          cache.put(req, fresh.clone()).catch(() => {});
+        }
+        return fresh;
+      } catch (_) {
+        // Offline: try direct match, then ignoreSearch, then index.html.
+        const cache = await caches.open(SHELL_CACHE);
+        const direct = await cache.match(req);
+        if (direct) return direct;
+        const looseSearch = await cache.match(req, { ignoreSearch: true });
+        if (looseSearch) return looseSearch;
+        const indexExact = await cache.match("./index.html");
+        if (indexExact) return indexExact;
+        const indexLoose = await cache.match("./");
+        if (indexLoose) return indexLoose;
+        // Last-ditch: build a minimal HTML response.
+        return new Response(
+          "<!doctype html><meta charset=utf-8><title>Offline</title>" +
+          "<style>body{font-family:sans-serif;color:#2b2b2b;background:#ecebe8;display:grid;place-items:center;min-height:100dvh;margin:0;padding:24px;text-align:center}</style>" +
+          "<p>You're offline and the app hasn't been cached yet. Connect to wifi and load the page once to enable offline mode.</p>",
+          { headers: { "Content-Type": "text/html; charset=utf-8" } }
+        );
+      }
+    })());
+    return;
+  }
+
   if (isImage(req)) {
     event.respondWith(cacheFirst(IMAGE_CACHE, req));
     return;
@@ -102,6 +140,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Other same-origin GETs: cache-first.
   const url = new URL(req.url);
   if (url.origin === self.location.origin) {
     event.respondWith(
