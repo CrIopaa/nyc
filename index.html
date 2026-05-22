@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>New York</title>
+  <meta name="description" content="A small guide for our New York visit." />
+  <meta name="theme-color" content="#2b2b2b" />
+
+  <!-- Web app manifest (Android + PWA) -->
+  <link rel="manifest" href="./manifest.json" />
+
+  <!-- iOS Home Screen support -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="New York" />
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png" />
+  <link rel="icon" type="image/png" sizes="32x32" href="./icons/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="./icons/favicon-16.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="wrap">
+      <a href="#/" class="brand" aria-label="New York home">
+        <span class="brand-mark">NY</span>
+        <span class="brand-name">New York</span>
+      </a>
+      <nav id="crumbs" class="crumbs" aria-label="Breadcrumb"></nav>
+      <button id="menu-btn" class="menu-btn" type="button" aria-label="Open menu" aria-controls="drawer" aria-expanded="false">
+        <span class="menu-bars" aria-hidden="true"><span></span><span></span><span></span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Drawer / burger menu -->
+  <aside id="drawer" class="drawer" hidden aria-hidden="true" aria-label="Categories">
+    <div class="drawer-backdrop" data-close-drawer></div>
+    <nav class="drawer-panel" tabindex="-1" aria-label="Category navigation">
+      <div class="drawer-head">
+        <span class="drawer-title">Categories</span>
+        <button class="drawer-close" type="button" data-close-drawer aria-label="Close menu">×</button>
+      </div>
+      <ul id="drawer-list" class="drawer-list"></ul>
+    </nav>
+  </aside>
+
+  <main id="app" class="wrap" aria-live="polite"></main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Our trip · built simply</span>
+    </div>
+  </footer>
+
+  <!-- Detail modal -->
+  <div id="modal" class="modal" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-backdrop" data-close></div>
+    <article class="modal-panel" tabindex="-1">
+      <button class="modal-close" type="button" data-close aria-label="Close">×</button>
+      <figure class="modal-figure">
+        <img id="modal-image" alt="" />
+      </figure>
+      <div class="modal-body">
+        <div class="modal-title-row">
+          <h2 id="modal-title"></h2>
+          <button id="modal-heart" class="modal-heart" type="button" aria-label="Add to favourites" aria-pressed="false"></button>
+        </div>
+        <p id="modal-sub" class="muted"></p>
+        <dl id="modal-meta" class="meta"></dl>
+        <div id="modal-desc" class="desc"></div>
+      </div>
+    </article>
+  </div>
+
+  <script src="./data.js"></script>
+  <script src="./app.js"></script>
+</body>
+</html>
