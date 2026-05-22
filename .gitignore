@@ -1,8 +1,6 @@
 .DS_Store
 node_modules/
 
-# Images excluded until compressed to WebP — pushed in a separate commit
-images/
-
-# Drafts folder kept locally; not pushed
+# Local working scratchpad: research JSON drafts + merge scripts.
+# Not pushed; data.js is the source of truth.
 _drafts/
