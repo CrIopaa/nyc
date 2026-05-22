@@ -42,6 +42,23 @@ body {
   text-rendering: optimizeLegibility;
 }
 a { color: inherit; text-decoration: none; }
+
+/* iOS Safari Data Detectors inject <a x-apple-data-detectors="true"> wrappers
+ * around things it recognizes as phone numbers, addresses, dates, times,
+ * tracking numbers, etc. The format-detection meta tag stops most of them,
+ * but a few still slip through (and standalone PWA mode ignores the meta).
+ * Force the injected anchors to render as plain inherited text and be
+ * non-tappable. */
+a[x-apple-data-detectors],
+a[x-apple-data-detectors="true"],
+[x-apple-data-detectors],
+[x-apple-data-detectors="true"] {
+  color: inherit !important;
+  text-decoration: none !important;
+  -webkit-text-decoration-color: transparent !important;
+  pointer-events: none !important;
+  cursor: text !important;
+}
 img { display: block; max-width: 100%; height: auto; }
 
 .wrap {
