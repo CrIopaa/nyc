@@ -8,7 +8,7 @@
  *     (so adding items to data.js auto-warms the cache on next visit).
  */
 
-const VERSION = "v4";
+const VERSION = "v5";
 const SHELL_CACHE = `ny-shell-${VERSION}`;
 const IMAGE_CACHE = `ny-images-${VERSION}`;
 const FONT_CACHE = `ny-fonts-${VERSION}`;
@@ -160,22 +160,45 @@ self.addEventListener("fetch", (event) => {
   }
 });
 
+async function broadcast(msg) {
+  const clients = await self.clients.matchAll({ includeUncontrolled: true });
+  clients.forEach((c) => c.postMessage(msg));
+}
+
+async function precacheImages(urls) {
+  const cache = await caches.open(IMAGE_CACHE);
+  const queue = urls.slice();
+  let done = 0;
+  const total = urls.length;
+  const CONCURRENCY = 8;
+  let lastReport = 0;
+
+  async function worker() {
+    while (queue.length) {
+      const u = queue.shift();
+      try {
+        const hit = await cache.match(u);
+        if (!hit) {
+          const res = await fetch(u, { cache: "no-cache" });
+          if (res && res.status === 200) await cache.put(u, res.clone());
+        }
+      } catch (_) { /* ignore individual failures */ }
+      done++;
+      // Throttle progress messages to ~one every 25 items to keep traffic light.
+      if (done - lastReport >= 25 || done === total) {
+        lastReport = done;
+        await broadcast({ type: "precache-progress", done, total });
+      }
+    }
+  }
+
+  await Promise.all(Array.from({ length: CONCURRENCY }, worker));
+  await broadcast({ type: "precache-done", total });
+}
+
 self.addEventListener("message", (event) => {
   const msg = event.data || {};
   if (msg.type === "precache-images" && Array.isArray(msg.urls)) {
-    event.waitUntil(
-      caches.open(IMAGE_CACHE).then(async (cache) => {
-        for (const u of msg.urls) {
-          try {
-            const hit = await cache.match(u);
-            if (hit) continue;
-            const res = await fetch(u, { cache: "no-cache" });
-            if (res && res.status === 200) await cache.put(u, res.clone());
-          } catch (_) {
-            /* ignore individual failures */
-          }
-        }
-      })
-    );
+    event.waitUntil(precacheImages(msg.urls));
   }
 });

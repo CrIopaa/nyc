@@ -610,6 +610,29 @@
    */
   const ENABLE_OFFLINE = true;
 
+  function ensureCacheStatusPill() {
+    let pill = document.getElementById("cache-status");
+    if (pill) return pill;
+    pill = document.createElement("div");
+    pill.id = "cache-status";
+    pill.className = "cache-status";
+    pill.hidden = true;
+    document.body.appendChild(pill);
+    return pill;
+  }
+  function setCacheStatus(text, mode) {
+    const pill = ensureCacheStatusPill();
+    pill.textContent = text;
+    pill.hidden = false;
+    pill.classList.toggle("is-done", mode === "done");
+  }
+  function hideCacheStatus(delay) {
+    setTimeout(() => {
+      const pill = document.getElementById("cache-status");
+      if (pill) pill.hidden = true;
+    }, delay || 4000);
+  }
+
   function registerSW() {
     if (!("serviceWorker" in navigator)) return;
 
@@ -623,6 +646,16 @@
       return;
     }
 
+    navigator.serviceWorker.addEventListener("message", (event) => {
+      const m = event.data || {};
+      if (m.type === "precache-progress") {
+        setCacheStatus(`Caching for offline · ${m.done} / ${m.total}`);
+      } else if (m.type === "precache-done") {
+        setCacheStatus(`Offline ready · ${m.total} images cached`, "done");
+        hideCacheStatus(6000);
+      }
+    });
+
     window.addEventListener("load", () => {
       navigator.serviceWorker
         .register("./sw.js")
@@ -633,9 +666,17 @@
               if (it.image) imgs.push(it.image);
             })
           );
-          const target = reg.active || navigator.serviceWorker.controller;
-          if (imgs.length && target) {
-            target.postMessage({ type: "precache-images", urls: imgs });
+          const sendTo = (worker) => {
+            if (worker && imgs.length) {
+              worker.postMessage({ type: "precache-images", urls: imgs });
+              setCacheStatus(`Caching for offline · 0 / ${imgs.length}`);
+            }
+          };
+          if (reg.active) sendTo(reg.active);
+          else if (navigator.serviceWorker.controller) sendTo(navigator.serviceWorker.controller);
+          else {
+            // Wait for activation, then send.
+            navigator.serviceWorker.ready.then((r) => sendTo(r.active));
           }
         })
         .catch(() => {});
